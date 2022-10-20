@@ -7,17 +7,25 @@ rfilterout = $(foreach a,$(1),$(a)/%)
 rwildcard = $(foreach d,$(wildcard $(addsuffix *,$(1))), \
 	    $(call rwildcard,$(d)/,$(2))$(filter-out $(call rfilterout,$(FILTEROUTSRC)),$(filter $(subst *,%,$(2)),$(d))))
 
-BUILD_SRC    += 0_Src/AppSw 0_Src/BaseSw 0_Src/CDD 0_Src/Mcs/Out/mcs00
+TARGET=MAIN
+
+ifeq ($(TARGET),SHELL)
+BUILD_SRC    += 0_Src/AppSw/CpuGeneric 0_Src/AppSw/Tricore/Demo/AsclinShellInterface 0_Src/BaseSw
+endif
+ifeq ($(TARGET),MAIN)
+BUILD_SRC    += 0_Src/AppSw/CpuGeneric 0_Src/AppSw/Tricore/Main 0_Src/BaseSw
+endif
+
 INCLUDES = -I0_Src/BaseSw/iLLD/Infra/Platform/ -I0_Src/BaseSw/iLLD/CpuGeneric -I0_Src/BaseSw/Infra/Platform -I0_Src/BaseSw/Service/CpuGeneric
 
-BUILD_OUTPUT_NAME ?= 2_Out/TC264
+BUILD_OUTPUT_NAME ?= 2_Out/TC264/$(TARGET)
 BUILD_OUTPUT ?= $(BUILD_OUTPUT_NAME)/
 
 BUILD_ELF    = $(BUILD_OUTPUT_NAME)/TC264.elf
 BUILD_HEX    = $(BUILD_OUTPUT_NAME)/TC264.hex
 BUILD_S19    = $(BUILD_OUTPUT_NAME)/TC264.s19
 
-CFLAGS =  -g -O2 
+CFLAGS =  -g -O2 -DIFX_CFG_ASSERT_STDIO=1
 
 B_GEN_LCF_FILE_TRICORE_TC ?= 1_ToolEnv/0_Build/1_Config/Config_Tricore_Gnuc/Lcf_Gnuc_Tricore_Tc.lsl
 
