@@ -46,7 +46,6 @@
 #include "SysSe/Time/Ifx_DateTime.h"
 #include "IfxLldVersion.h"
 #include "_Impl/IfxGlobal_cfg.h"
-#include "Cpu0_Main.h"
 
 /******************************************************************************/
 /*-----------------------------------Macros-----------------------------------*/
@@ -273,9 +272,6 @@ boolean AppShell_status(pchar args, void *data, IfxStdIf_DPipe *io)
         Ifx_DateTime rt;
         DateTime_get(&rt);
         IfxStdIf_DPipe_print(io, "Real-time: %02d:%02d:%02d"ENDL, rt.hours, rt.minutes, rt.seconds);
-        IfxStdIf_DPipe_print(io, "CPU Frequency: %ld Hz"ENDL, (sint32)g_AppCpu0.info.cpuFreq);
-        IfxStdIf_DPipe_print(io, "SYS Frequency: %ld Hz"ENDL, (sint32)g_AppCpu0.info.sysFreq);
-        IfxStdIf_DPipe_print(io, "STM Frequency: %ld Hz"ENDL, (sint32)g_AppCpu0.info.stmFreq);
     }
 
     return TRUE;

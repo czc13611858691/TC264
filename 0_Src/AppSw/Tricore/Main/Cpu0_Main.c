@@ -43,25 +43,30 @@
 #include "Ifx_Types.h"
 #include "IfxCpu.h"
 #include "IfxScuWdt.h"
+#include "FreertosApp.h"
+#include "AsclinShellInterface.h"
+#include "IfxStm_Timer.h"
+#include "portmacro.h"
+IfxCpu_syncEvent cpuSyncEvent = 0;
+IfxStm_Timer TimerTs[2];
 
-IfxCpu_syncEvent cpuSyncEvent= 0;
-
-int core0_main (void)
+int core0_main(void)
 {
     IfxCpu_enableInterrupts();
     /*
      * !!WATCHDOG0 AND SAFETY WATCHDOG ARE DISABLED HERE!!
      * Enable the watchdog in the demo if it is required and also service the watchdog periodically
      * */
-    IfxScuWdt_disableCpuWatchdog (IfxScuWdt_getCpuWatchdogPassword ());
-    IfxScuWdt_disableSafetyWatchdog (IfxScuWdt_getSafetyWatchdogPassword ());
+    IfxScuWdt_disableCpuWatchdog(IfxScuWdt_getCpuWatchdogPassword());
+    IfxScuWdt_disableSafetyWatchdog(IfxScuWdt_getSafetyWatchdogPassword());
 
     /* Cpu sync event wait*/
     IfxCpu_emitEvent(&cpuSyncEvent);
     IfxCpu_waitEvent(&cpuSyncEvent, 1);
+    AsclinShellInterface_init();
+    FreertosApp_Init();
     while (1)
     {
     }
     return (1);
 }
-

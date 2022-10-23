@@ -13,7 +13,7 @@ ifeq ($(TARGET),SHELL)
 BUILD_SRC    += 0_Src/AppSw/CpuGeneric 0_Src/AppSw/Tricore/Demo/AsclinShellInterface 0_Src/BaseSw
 endif
 ifeq ($(TARGET),MAIN)
-BUILD_SRC    += 0_Src/AppSw/CpuGeneric 0_Src/AppSw/Tricore/Main 0_Src/BaseSw
+BUILD_SRC    += 0_Src/AppSw/CpuGeneric 0_Src/AppSw/Tricore/Main 0_Src/AppSw/Tricore/Demo/AsclinShellInterface/Demo_Illd 0_Src/AppSw/Tricore/Demo/AsclinShellInterface/Cfg_Illd  0_Src/BaseSw
 endif
 
 INCLUDES = -I0_Src/BaseSw/iLLD/Infra/Platform/ -I0_Src/BaseSw/iLLD/CpuGeneric -I0_Src/BaseSw/Infra/Platform -I0_Src/BaseSw/Service/CpuGeneric
@@ -25,7 +25,7 @@ BUILD_ELF    = $(BUILD_OUTPUT_NAME)/TC264.elf
 BUILD_HEX    = $(BUILD_OUTPUT_NAME)/TC264.hex
 BUILD_S19    = $(BUILD_OUTPUT_NAME)/TC264.s19
 
-CFLAGS =  -g -O2 -DIFX_CFG_ASSERT_STDIO=1
+CFLAGS =  -g -O2 -DIFX_CFG_ASSERT_STDIO=1 -D__HIGHTEC__
 
 B_GEN_LCF_FILE_TRICORE_TC ?= 1_ToolEnv/0_Build/1_Config/Config_Tricore_Gnuc/Lcf_Gnuc_Tricore_Tc.lsl
 
