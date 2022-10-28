@@ -1,8 +1,6 @@
 /*
- * FreeRTOS Kernel V10.4.6
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
- *
- * SPDX-License-Identifier: MIT
+ * FreeRTOS SMP Kernel V202110.00
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -47,7 +45,7 @@
  *     contains the typedefs required to build FreeRTOS.  Read the instructions
  *     in FreeRTOS/source/stdint.readme for more information.
  */
-#include <stdint.h> /* READ COMMENT ABOVE. */
+#include <stdint.h>     /* READ COMMENT ABOVE. */
 
 /* *INDENT-OFF* */
 #ifdef __cplusplus
@@ -73,6 +71,14 @@
 #if ( configUSE_NEWLIB_REENTRANT == 1 )
     #include <reent.h>
 #endif
+
+#ifdef configNEWLIB_REENTRANT_IS_DYNAMIC
+    #if ( configUSE_NEWLIB_REENTRANT != 1 )
+        #error configUSE_NEWLIB_REENTRANT must be defined to 1 to enable configNEWLIB_REENTRANT_IS_DYNAMIC
+    #endif
+#else /* configNEWLIB_REENTRANT_IS_DYNAMIC */
+    #define configNEWLIB_REENTRANT_IS_DYNAMIC   0
+#endif /* configNEWLIB_REENTRANT_IS_DYNAMIC */
 
 /*
  * Check all the required application specific macros have been defined.
@@ -130,23 +136,21 @@
 
 #ifdef INCLUDE_xTaskDelayUntil
     #ifdef INCLUDE_vTaskDelayUntil
-
-/* INCLUDE_vTaskDelayUntil was replaced by INCLUDE_xTaskDelayUntil.  Backward
- * compatibility is maintained if only one or the other is defined, but
- * there is a conflict if both are defined. */
+        /* INCLUDE_vTaskDelayUntil was replaced by INCLUDE_xTaskDelayUntil.  Backward
+         * compatibility is maintained if only one or the other is defined, but
+         * there is a conflict if both are defined. */
         #error INCLUDE_vTaskDelayUntil and INCLUDE_xTaskDelayUntil are both defined.  INCLUDE_vTaskDelayUntil is no longer required and should be removed
     #endif
 #endif
 
 #ifndef INCLUDE_xTaskDelayUntil
     #ifdef INCLUDE_vTaskDelayUntil
-
-/* If INCLUDE_vTaskDelayUntil is set but INCLUDE_xTaskDelayUntil is not then
- * the project's FreeRTOSConfig.h probably pre-dates the introduction of
- * xTaskDelayUntil and setting INCLUDE_xTaskDelayUntil to whatever
- * INCLUDE_vTaskDelayUntil is set to will ensure backward compatibility.
- */
-        #define INCLUDE_xTaskDelayUntil    INCLUDE_vTaskDelayUntil
+        /* If INCLUDE_vTaskDelayUntil is set but INCLUDE_xTaskDelayUntil is not then
+         * the project's FreeRTOSConfig.h probably pre-dates the introduction of
+         * xTaskDelayUntil and setting INCLUDE_xTaskDelayUntil to whatever
+         * INCLUDE_vTaskDelayUntil is set to will ensure backward compatibility.
+         */
+        #define INCLUDE_xTaskDelayUntil INCLUDE_vTaskDelayUntil
     #endif
 #endif
 
@@ -240,6 +244,14 @@
     #define configUSE_COUNTING_SEMAPHORES    0
 #endif
 
+#ifndef configUSE_TASK_PREEMPTION_DISABLE
+    #define configUSE_TASK_PREEMPTION_DISABLE    0
+#endif
+
+#ifndef configUSE_CORE_AFFINITY
+    #define configUSE_CORE_AFFINITY    0
+#endif
+
 #ifndef configUSE_ALTERNATIVE_API
     #define configUSE_ALTERNATIVE_API    0
 #endif
@@ -287,6 +299,15 @@
     #define portSOFTWARE_BARRIER()
 #endif
 
+#ifndef configNUM_CORES
+    #define configNUM_CORES    1
+#endif
+
+#ifndef configRUN_MULTIPLE_PRIORITIES
+    #define configRUN_MULTIPLE_PRIORITIES    0
+#endif
+
+
 /* The timers module relies on xTaskGetSchedulerState(). */
 #if configUSE_TIMERS == 1
 
@@ -301,6 +322,10 @@
     #ifndef configTIMER_TASK_STACK_DEPTH
         #error If configUSE_TIMERS is set to 1 then configTIMER_TASK_STACK_DEPTH must also be defined.
     #endif /* configTIMER_TASK_STACK_DEPTH */
+
+    #ifndef portTIMER_CALLBACK_ATTRIBUTE
+        #define portTIMER_CALLBACK_ATTRIBUTE
+    #endif /* portTIMER_CALLBACK_ATTRIBUTE */
 
 #endif /* configUSE_TIMERS */
 
@@ -782,10 +807,6 @@
     #define portPRIVILEGE_BIT    ( ( UBaseType_t ) 0x00 )
 #endif
 
-#ifndef portYIELD_WITHIN_API
-    #define portYIELD_WITHIN_API    portYIELD
-#endif
-
 #ifndef portSUPPRESS_TICKS_AND_SLEEP
     #define portSUPPRESS_TICKS_AND_SLEEP( xExpectedIdleTime )
 #endif
@@ -900,19 +921,16 @@
     #define configSUPPORT_DYNAMIC_ALLOCATION    1
 #endif
 
+#ifndef configSTACK_ALLOCATION_FROM_SEPARATE_HEAP
+    /* Defaults to 0 for backward compatibility. */
+    #define configSTACK_ALLOCATION_FROM_SEPARATE_HEAP   0
+#endif
+
 #ifndef configSTACK_DEPTH_TYPE
 
 /* Defaults to uint16_t for backward compatibility, but can be overridden
  * in FreeRTOSConfig.h if uint16_t is too restrictive. */
     #define configSTACK_DEPTH_TYPE    uint16_t
-#endif
-
-#ifndef configRUN_TIME_COUNTER_TYPE
-
-/* Defaults to uint32_t for backward compatibility, but can be overridden in
- * FreeRTOSConfig.h if uint32_t is too restrictive. */
-
-    #define configRUN_TIME_COUNTER_TYPE    uint32_t
 #endif
 
 #ifndef configMESSAGE_BUFFER_LENGTH_TYPE
@@ -936,6 +954,18 @@
 
 #if ( ( configUSE_RECURSIVE_MUTEXES == 1 ) && ( configUSE_MUTEXES != 1 ) )
     #error configUSE_MUTEXES must be set to 1 to use recursive mutexes
+#endif
+
+#if( ( configRUN_MULTIPLE_PRIORITIES == 0 ) && ( configUSE_CORE_AFFINITY != 0 ) )
+    #error configRUN_MULTIPLE_PRIORITIES must be set to 1 to use core exclusion
+#endif
+
+#if( ( configRUN_MULTIPLE_PRIORITIES == 0 ) && ( configUSE_TASK_PREEMPTION_DISABLE != 0 ) )
+    #error configRUN_MULTIPLE_PRIORITIES must be set to 1 to use task preemption disable
+#endif
+
+#if( ( configUSE_PREEMPTION == 0 ) && ( configUSE_TASK_PREEMPTION_DISABLE != 0 ) )
+    #error configUSE_PREEMPTION must be set to 1 to use task preemption disable
 #endif
 
 #ifndef configINITIAL_TICK_COUNT
@@ -1066,11 +1096,6 @@
     #define configRUN_FREERTOS_SECURE_ONLY    0
 #endif
 
-#ifndef configRUN_ADDITIONAL_TESTS
-    #define configRUN_ADDITIONAL_TESTS    0
-#endif
-
-
 /* Sometimes the FreeRTOSConfig.h settings only allow a task to be created using
  * dynamically allocated RAM, in which case when any task is deleted it is known
  * that both the task's stack and TCB need to be freed.  Sometimes the
@@ -1184,10 +1209,17 @@ typedef struct xSTATIC_TCB
     #if ( portUSING_MPU_WRAPPERS == 1 )
         xMPU_SETTINGS xDummy2;
     #endif
+    #if ( configUSE_CORE_AFFINITY == 1 && configNUM_CORES > 1 )
+        UBaseType_t uxDummy25;
+    #endif
     StaticListItem_t xDummy3[ 2 ];
     UBaseType_t uxDummy5;
     void * pxDummy6;
+    BaseType_t xDummy23[ 2 ];
     uint8_t ucDummy7[ configMAX_TASK_NAME_LEN ];
+    #if ( configUSE_TASK_PREEMPTION_DISABLE == 1 )
+        BaseType_t xDummy24;
+    #endif
     #if ( ( portSTACK_GROWTH > 0 ) || ( configRECORD_STACK_HIGH_ADDRESS == 1 ) )
         void * pxDummy8;
     #endif
@@ -1207,7 +1239,7 @@ typedef struct xSTATIC_TCB
         void * pvDummy15[ configNUM_THREAD_LOCAL_STORAGE_POINTERS ];
     #endif
     #if ( configGENERATE_RUN_TIME_STATS == 1 )
-        configRUN_TIME_COUNTER_TYPE ulDummy16;
+        uint32_t ulDummy16;
     #endif
     #if ( configUSE_NEWLIB_REENTRANT == 1 )
         struct  _reent xDummy17;

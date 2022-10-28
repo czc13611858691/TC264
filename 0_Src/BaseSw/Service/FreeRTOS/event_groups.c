@@ -1,8 +1,6 @@
 /*
- * FreeRTOS Kernel V10.4.6
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
- *
- * SPDX-License-Identifier: MIT
+ * FreeRTOS SMP Kernel V202110.00
+ * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -258,7 +256,7 @@ EventBits_t xEventGroupSync( EventGroupHandle_t xEventGroup,
     {
         if( xAlreadyYielded == pdFALSE )
         {
-            portYIELD_WITHIN_API();
+            vTaskYieldWithinAPI();
         }
         else
         {
@@ -410,7 +408,7 @@ EventBits_t xEventGroupWaitBits( EventGroupHandle_t xEventGroup,
     {
         if( xAlreadyYielded == pdFALSE )
         {
-            portYIELD_WITHIN_API();
+            vTaskYieldWithinAPI();
         }
         else
         {
@@ -628,11 +626,7 @@ EventBits_t xEventGroupSetBits( EventGroupHandle_t xEventGroup,
 void vEventGroupDelete( EventGroupHandle_t xEventGroup )
 {
     EventGroup_t * pxEventBits = xEventGroup;
-    const List_t * pxTasksWaitingForBits;
-
-    configASSERT( pxEventBits );
-
-    pxTasksWaitingForBits = &( pxEventBits->xTasksWaitingForBits );
+    const List_t * pxTasksWaitingForBits = &( pxEventBits->xTasksWaitingForBits );
 
     vTaskSuspendAll();
     {
@@ -673,6 +667,7 @@ void vEventGroupDelete( EventGroupHandle_t xEventGroup )
 
 /* For internal use only - execute a 'set bits' command that was pended from
  * an interrupt. */
+portTIMER_CALLBACK_ATTRIBUTE
 void vEventGroupSetBitsCallback( void * pvEventGroup,
                                  const uint32_t ulBitsToSet )
 {
@@ -682,6 +677,7 @@ void vEventGroupSetBitsCallback( void * pvEventGroup,
 
 /* For internal use only - execute a 'clear bits' command that was pended from
  * an interrupt. */
+portTIMER_CALLBACK_ATTRIBUTE
 void vEventGroupClearBitsCallback( void * pvEventGroup,
                                    const uint32_t ulBitsToClear )
 {

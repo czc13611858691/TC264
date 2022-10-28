@@ -30,7 +30,8 @@
 #define configMAX_CO_ROUTINE_PRIORITIES 	( 2 )
 
 /* Software timer configuration. */
-#define configUSE_TIMERS					(1)
+#define configUSE_TIMERS					(0)
+#define configNUM_CORES    2
 #define configTIMER_TASK_PRIORITY			( 9 )
 #define configTIMER_QUEUE_LENGTH			( 5 )
 #define configTIMER_TASK_STACK_DEPTH		configMINIMAL_STACK_SIZE
@@ -62,10 +63,14 @@
 /* AURIX TCxxx definitions */
 #define configAURIX_GENERATION  TRICORE_AURIX_TC3XX
 #define configSTM_MODULE        (MODULE_STM0)
+#define configSTM_MODULE1        (MODULE_STM1)
 #define configSTM_CLOCK_HZ		(configCPU_CLOCK_HZ/2)
 #define configSTM_TOS           (0)
+#define configSTM_TOS1           (1)
 #define configCONTEXT_SRC       (SRC_GPSR00)
+#define configCONTEXT_SRC1       (SRC_GPSR01)
 #define configCONTEXT_TOS       (0)
+#define configCONTEXT_TOS1       (1)
 
 #endif /* FREERTOS_CONFIG_H */
 

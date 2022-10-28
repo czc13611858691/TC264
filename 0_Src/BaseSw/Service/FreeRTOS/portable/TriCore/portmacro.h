@@ -114,30 +114,6 @@ extern unsigned long vPortGetRunTimeCounterValue(void);
 
 /* Critical section management. */
 #define portCCPN_MASK             ( 0x000000FFUL )
-/* Set ICR.CCPN to configMAX_SYSCALL_INTERRUPT_PRIORITY. */
-#define portDISABLE_INTERRUPTS()                                                                      \
-    {                                                                                                 \
-        unsigned long ulICR;                                                                          \
-        TriCore__disable();                                                                           \
-        ulICR = TriCore__mfcr( TRICORE_CPU_ICR );      /* Get current ICR value. */                   \
-        ulICR &= ~portCCPN_MASK;                       /* Clear down mask bits. */                    \
-        ulICR |= configMAX_SYSCALL_INTERRUPT_PRIORITY; /* Set mask bits to required priority mask. */ \
-        TriCore__mtcr( TRICORE_CPU_ICR, ulICR );       /* Write back updated ICR. */                  \
-        TriCore__isync();                                                                             \
-        TriCore__enable();                                                                            \
-    }
-
-/* Clear ICR.CCPN to allow all interrupt priorities. */
-#define portENABLE_INTERRUPTS()                                                 \
-    {                                                                           \
-        unsigned long ulICR;                                                    \
-        TriCore__disable();                                                     \
-        ulICR = TriCore__mfcr( TRICORE_CPU_ICR ); /* Get current ICR value. */  \
-        ulICR &= ~portCCPN_MASK;                  /* Clear down mask bits. */   \
-        TriCore__mtcr( TRICORE_CPU_ICR, ulICR );  /* Write back updated ICR. */ \
-        TriCore__isync();                                                       \
-        TriCore__enable();                                                      \
-    }
 
 /* Set ICR.CCPN to uxSavedMaskValue. */
 #define portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedMaskValue )                                         \
@@ -187,11 +163,27 @@ TRICORE_CINLINE unsigned long uxPortSetInterruptMaskFromISR( void )
     return( uxReturn & portCCPN_MASK );
 }
 
+#include "IfxCpu.h"
+#define portDISABLE_INTERRUPTS() IfxCpu_disableInterrupts()
+
 TRICORE_CINLINE void vPortAssertIfInISR( void )
 {
     configASSERT( ( TriCore__mfcr( TRICORE_CPU_PSW ) & ( 1U << 9U ) ) == 0x00000000U );
 }
-
+#define portENABLE_INTERRUPTS() IfxCpu_enableInterrupts()
+#define portRESTORE_INTERRUPTS(x) IfxCpu_restoreInterrupts(x)
+#define portGET_CORE_ID IfxCpu_getCoreId
+#define portYIELD_CORE(x) vPortYield()
+#define portCHECK_IF_IN_ISR() ( ( TriCore__mfcr( TRICORE_CPU_PSW ) & ( 1U << 9U ) ) != 0x00000000U )
+void arcuireTaskLock(void);
+void arcuireIsrLock(void);
+void releaseTaskLock(void);
+void releaseIsrLock(void);
+#define portGET_TASK_LOCK arcuireTaskLock
+#define portRELEASE_TASK_LOCK releaseTaskLock
+#define portGET_ISR_LOCK arcuireIsrLock
+#define portRELEASE_ISR_LOCK releaseIsrLock
+#define portTIMER_CALLBACK_ATTRIBUTE
 #ifdef __cplusplus
     }
 #endif
