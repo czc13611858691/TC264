@@ -9,6 +9,7 @@ rwildcard = $(foreach d,$(wildcard $(addsuffix *,$(1))), \
 
 BUILD_SRC    += 0_Src/AppSw 0_Src/BaseSw
 INCLUDES = -I0_Src/BaseSw/iLLD/Infra/Platform/ -I0_Src/BaseSw/iLLD/CpuGeneric -I0_Src/BaseSw/Infra/Platform -I0_Src/BaseSw/Service/CpuGeneric
+ASM_SOURCES += \
 
 BUILD_OUTPUT_NAME ?= build
 BUILD_OUTPUT ?= $(BUILD_OUTPUT_NAME)/
@@ -39,18 +40,18 @@ OBJECTS = $(addprefix $(BUILD_OUTPUT_NAME)/,$(notdir $(SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(SOURCES)))
 # list of ASM program objects
 OBJECTS += $(addprefix $(BUILD_OUTPUT_NAME)/,$(notdir $(ASM_SOURCES:.s=.o)))
-vpath %.s $(sort $(dir $(BUILD_OUTPUT_NAME)))
+vpath %.s $(sort $(dir $(ASM_SOURCES)))
 
 DEPENDS = $(OBJECTS:.o=.d)
 
 PHONY := all
-all: $(BUILD_ELF) $(BUILD_HEX)
+all: $(BUILD_OUTPUT_NAME) $(BUILD_ELF) $(BUILD_HEX)
 	@:
-$(BUILD_ELF): $(BUILD_OUTPUT_NAME) $(OBJECTS) $(B_GEN_LCF_FILE_TRICORE_TC)
+$(BUILD_ELF): $(OBJECTS) $(B_GEN_LCF_FILE_TRICORE_TC)
 	@echo "    LD  $@"
 	@$(CC) $(LD_LIBS) -Wl,-T $(B_GEN_LCF_FILE_TRICORE_TC) -Wl,-Map=$(@:.elf=.map) -Wl,--extmap=a $(OBJECTS) -o $@
 
-$(BUILD_OUTPUT)%.o: %.c  $(BUILD_OUTPUT_NAME)
+$(BUILD_OUTPUT)%.o: %.c
 	@echo "    CC  $@"
 	@$(CC) $(ALL_FLAGS) $(INCLUDES_DIR) -c $< -o $@ -save-temps=obj -MMD
 
@@ -65,7 +66,7 @@ $(BUILD_S19): $(BUILD_ELF)
 	@$(OBJCOPY) $< -O srec $@
 
 $(BUILD_OUTPUT_NAME): 
-	@mkdir -p $@
+	@mkdir $@
 
 PHONY := clean
 clean:
