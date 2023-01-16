@@ -53,7 +53,7 @@ $(BUILD_ELF): $(OBJECTS) $(B_GEN_LCF_FILE_TRICORE_TC)
 
 $(BUILD_OUTPUT)%.o: %.c
 	@echo "    CC  $@"
-	@$(CC) $(ALL_FLAGS) $(INCLUDES_DIR) -c $< -o $@ -save-temps=obj -MMD
+	@$(CC) $(ALL_FLAGS) $(INCLUDES_DIR) -c $< -o $@ -MMD
 
 # Make-rule to build: hex
 $(BUILD_HEX): $(BUILD_ELF)
