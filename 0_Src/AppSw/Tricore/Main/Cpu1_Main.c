@@ -46,9 +46,11 @@
 
 extern IfxCpu_syncEvent cpuSyncEvent;
 
+extern int main(void);
+
 int core1_main (void)
 {
-    IfxCpu_enableInterrupts();
+    // IfxCpu_enableInterrupts();
     /*
      * !!WATCHDOG1 IS DISABLED HERE!!
      * Enable the watchdog in the demo if it is required and also service the watchdog periodically
@@ -56,8 +58,11 @@ int core1_main (void)
     IfxScuWdt_disableCpuWatchdog (IfxScuWdt_getCpuWatchdogPassword ());
 
     /* Cpu sync event wait*/
-    IfxCpu_emitEvent(&cpuSyncEvent);
-    IfxCpu_waitEvent(&cpuSyncEvent, 1);
+    // IfxCpu_emitEvent(&cpuSyncEvent);
+    // IfxCpu_waitEvent(&cpuSyncEvent, 1);
+
+    main();
+
     while (1)
     {
     }
