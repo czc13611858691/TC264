@@ -60,7 +60,7 @@
 #   define IFX_CFG_CPU_CSTART_ENABLE_TRICORE1_PCACHE (1)  /**< Program Cache enabled by default*/
 #endif
 #ifndef IFX_CFG_CPU_CSTART_ENABLE_TRICORE1_DCACHE
-#   define IFX_CFG_CPU_CSTART_ENABLE_TRICORE1_DCACHE (1)  /**< Data Cache enabled by default*/
+#   define IFX_CFG_CPU_CSTART_ENABLE_TRICORE1_DCACHE (0)  /**< Data Cache enabled by default*/
 #endif
 /*******************************************************************************
 **                      Imported Function Declarations                        **
@@ -114,14 +114,14 @@ void _Core1_start(void)
     /* Clear the ENDINIT bit in the WDT_CON0 register, inline funtion */
     IfxScuWdt_clearCpuEndinitInline(&MODULE_SCU.WDTCPU[1], wdtPassword);
 
-    /* Load Base Address of Trap Vector Table. */
-    __mtcr(CPU_BTV, (uint32)__TRAPTAB(1));
+    // /* Load Base Address of Trap Vector Table. */
+    // __mtcr(CPU_BTV, (uint32)__TRAPTAB(1));
 
-    /* Load Base Address of Interrupt Vector Table. we will do this later in the program */
-    __mtcr(CPU_BIV, (uint32)__INTTAB(1));
+    // /* Load Base Address of Interrupt Vector Table. we will do this later in the program */
+    // __mtcr(CPU_BIV, (uint32)__INTTAB(1));
 
-    /* Load interupt stack pointer. */
-    __mtcr(CPU_ISP, (uint32)__ISTACK(1));
+    // /* Load interupt stack pointer. */
+    // __mtcr(CPU_ISP, (uint32)__ISTACK(1));
 
     IfxScuWdt_setCpuEndinitInline(&MODULE_SCU.WDTCPU[1], wdtPassword);
 

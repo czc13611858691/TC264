@@ -57,24 +57,24 @@
  *
  */
 #ifndef IFX_CFG_CPU_CSTART_ENABLE_TRICORE0
-#   define IFX_CFG_CPU_CSTART_ENABLE_TRICORE0        (1) /**< Cpu0 enabled by default*/
+#define IFX_CFG_CPU_CSTART_ENABLE_TRICORE0 (1) /**< Cpu0 enabled by default*/
 #endif
 #ifndef IFX_CFG_CPU_CSTART_ENABLE_TRICORE1
-#   define IFX_CFG_CPU_CSTART_ENABLE_TRICORE1        (1) /**< Cpu1 enabled by default*/
+#define IFX_CFG_CPU_CSTART_ENABLE_TRICORE1 (0) /**< Cpu1 enabled by default*/
 #endif
 
 /** \brief Configuration for cache enable.
  *
  */
 #ifndef IFX_CFG_CPU_CSTART_ENABLE_TRICORE0_PCACHE
-#   define IFX_CFG_CPU_CSTART_ENABLE_TRICORE0_PCACHE (1)  /**< Program Cache enabled by default*/
+#define IFX_CFG_CPU_CSTART_ENABLE_TRICORE0_PCACHE (1) /**< Program Cache enabled by default*/
 #endif
 #ifndef IFX_CFG_CPU_CSTART_ENABLE_TRICORE0_DCACHE
-#   define IFX_CFG_CPU_CSTART_ENABLE_TRICORE0_DCACHE (1)  /**< Data Cache enabled by default*/
+#define IFX_CFG_CPU_CSTART_ENABLE_TRICORE0_DCACHE (0) /**< Data Cache enabled by default*/
 #endif
 
 #ifndef IFXCPU_CSTART_CCU_INIT_HOOK
-#define IFXCPU_CSTART_CCU_INIT_HOOK() (void)IfxScuCcu_init(&IfxScuCcu_defaultClockConfig);   /*The status returned by Ccu init is ignored */
+#define IFXCPU_CSTART_CCU_INIT_HOOK() (void)IfxScuCcu_init(&IfxScuCcu_defaultClockConfig); /*The status returned by Ccu init is ignored */
 #endif
 
 /*******************************************************************************
@@ -91,22 +91,32 @@ __asm("\t .extern core0_main");
 /*******************************************************************************
 **                      Private Constant Definitions                          **
 *******************************************************************************/
-#define IFXCSTART0_PSW_DEFAULT     (0x00000980u)
+#define IFXCSTART0_PSW_DEFAULT (0x00000980u)
 #define IFXCSTART0_PCX_O_S_DEFAULT (0xfff00000u)
 
 /*********************************************************************************
-* _start() - startup code
-*********************************************************************************/
+ * _start() - startup code
+ *********************************************************************************/
 #if defined(__HIGHTEC__)
-#pragma GCC optimize ("-O2")
+#pragma GCC optimize("-O2")
 #endif
 
 void _Core0_start(void)
 {
     uint32 pcxi;
-    uint16 cpuWdtPassword = IfxScuWdt_getCpuWatchdogPasswordInline(&MODULE_SCU.WDTCPU[0]);
+    uint16 cpuWdtPassword;
+    unsigned int coreID;
 
-    IFX_CFG_CPU_CSTART_PRE_C_INIT_HOOK(0);  /*Test Stack, CSA and Cache */
+    coreID = __mfcr(0xfe1c);
+
+    if (coreID == 1u)
+    {
+        __non_return_call(_Core1_start);
+    }
+
+    cpuWdtPassword = IfxScuWdt_getCpuWatchdogPasswordInline(&MODULE_SCU.WDTCPU[0]);
+
+    IFX_CFG_CPU_CSTART_PRE_C_INIT_HOOK(0); /*Test Stack, CSA and Cache */
 
     /* Load user stack pointer */
     __setareg(sp, __USTACK(0));
@@ -116,7 +126,7 @@ void _Core0_start(void)
     __mtcr(CPU_PSW, IFXCSTART0_PSW_DEFAULT);
 
     /* Set the PCXS and PCXO to its reset value in case of a warm start */
-    pcxi  = __mfcr(CPU_PCXI);
+    pcxi = __mfcr(CPU_PCXI);
     pcxi &= IFXCSTART0_PCX_O_S_DEFAULT; /*0xfff00000; */
     __mtcr(CPU_PCXI, pcxi);
 
@@ -130,13 +140,13 @@ void _Core0_start(void)
     IfxScuWdt_clearCpuEndinitInline(&MODULE_SCU.WDTCPU[0], cpuWdtPassword);
 
     /* Load Base Address of Trap Vector Table. */
-    __mtcr(CPU_BTV, (uint32)__TRAPTAB(0));
+    // __mtcr(CPU_BTV, (uint32)__TRAPTAB(0));
 
     /* Load Base Address of Interrupt Vector Table. we will do this later in the program */
-    __mtcr(CPU_BIV, (uint32)__INTTAB(0));
+    // __mtcr(CPU_BIV, (uint32)__INTTAB(0));
 
     /* Load interupt stack pointer. */
-    __mtcr(CPU_ISP, (uint32)__ISTACK(0));
+    // __mtcr(CPU_ISP, (uint32)__ISTACK(0));
 
     IfxScuWdt_setCpuEndinitInline(&MODULE_SCU.WDTCPU[0], cpuWdtPassword);
 
@@ -149,7 +159,7 @@ void _Core0_start(void)
     __setareg(a9, __SDATA4(0));
     /* Setup the context save area linked list. */
 
-    IfxCpu_initCSA((uint32 *)__CSA(0), (uint32 *)__CSA_END(0));     /*Initialize the context save area for CPU0 */
+    IfxCpu_initCSA((uint32 *)__CSA(0), (uint32 *)__CSA_END(0)); /*Initialize the context save area for CPU0 */
 
     {
         /*CPU and safety watchdogs are enabled by default, C initialization functions are not servicing the watchdogs */
@@ -157,7 +167,7 @@ void _Core0_start(void)
         IfxScuWdt_disableCpuWatchdog(cpuWdtPassword);
         IfxScuWdt_disableSafetyWatchdog(safetyWdtPassword);
 
-        Ifx_C_Init();           /*Initialization of C runtime variables */
+        Ifx_C_Init(); /*Initialization of C runtime variables */
 
         IfxScuWdt_enableCpuWatchdog(cpuWdtPassword);
         IfxScuWdt_enableSafetyWatchdog(safetyWdtPassword);
@@ -168,7 +178,7 @@ void _Core0_start(void)
 
     /*Start remaining cores */
 #if (IFX_CFG_CPU_CSTART_ENABLE_TRICORE1 != 0)
-    (void)IfxCpu_startCore(&MODULE_CPU1, (uint32)&_Core1_start);       /*The status returned by function call is ignored */
+    (void)IfxCpu_startCore(&MODULE_CPU1, (uint32)&_Core1_start); /*The status returned by function call is ignored */
 #endif
 
 #if (IFX_CFG_CPU_CSTART_ENABLE_TRICORE0 == 0)
@@ -186,7 +196,7 @@ void _Core0_start(void)
 #endif
 /******************************************************************************
  * reset vector address, user section to inform linker to locate the code at 0x8000 0020
- *****************************************************************************/ 
+ *****************************************************************************/
 #if defined(__HIGHTEC__)
 #pragma section
 #pragma section ".start" x
@@ -203,7 +213,6 @@ void _START(void)
 {
     __non_return_call(_Core0_start);
 }
-
 
 /* reset the sections defined above, to normal region */
 #if defined(__HIGHTEC__)
@@ -238,14 +247,14 @@ void _START(void)
  * Boot mode header at memory location 0c8000 0000.
  */
 const uint32 BootModeHeader_0[] = {
-    0x00000000u,                 /* STADBM first user code at 0x8000 0020h */
-    0xb3590070u,                 /* BMI = 0070h BMHDID = B359h */
-    0x00000000u,                 /* ChkStart */
-    0x00000000u,                 /* ChkEnd */
-    0x00000000u,                 /* CRCrange */
-    0x00000000u,                 /* !CRCrange */
-    0x791eb864u,                 /* CRChead */
-    0x86e1479bu                  /* !CRChead */
+    0x00000000u, /* STADBM first user code at 0x8000 0020h */
+    0xb3590070u, /* BMI = 0070h BMHDID = B359h */
+    0x00000000u, /* ChkStart */
+    0x00000000u, /* ChkEnd */
+    0x00000000u, /* CRCrange */
+    0x00000000u, /* !CRCrange */
+    0x791eb864u, /* CRChead */
+    0x86e1479bu  /* !CRChead */
 };
 
 /*reset the sections defined above */
@@ -278,14 +287,14 @@ const uint32 BootModeHeader_0[] = {
  * Boot mode header at memory location 0c8002 0000.
  */
 const uint32 BootModeHeader_1[] = {
-    0x00000000u,                 /* STADBM first user code at 0x8000 0020h */
-    0xB3590070u,                 /* BMI = 0070h BMHDID = B359h */
-    0x00000000u,                 /* ChkStart */
-    0x00000000u,                 /* ChkEnd */
-    0x00000000u,                 /* CRCrange */
-    0x00000000u,                 /* !CRCrange */
-    0x791eb864u,                 /* CRChead */
-    0x86e1479bu                  /* !CRChead */
+    0x00000000u, /* STADBM first user code at 0x8000 0020h */
+    0xB3590070u, /* BMI = 0070h BMHDID = B359h */
+    0x00000000u, /* ChkStart */
+    0x00000000u, /* ChkEnd */
+    0x00000000u, /* CRCrange */
+    0x00000000u, /* !CRCrange */
+    0x791eb864u, /* CRChead */
+    0x86e1479bu  /* !CRChead */
 };
 
 /*reset the sections defined above */
