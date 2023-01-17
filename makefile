@@ -48,21 +48,21 @@ PHONY := all
 all: $(BUILD_OUTPUT_NAME) $(BUILD_ELF) $(BUILD_HEX)
 	@:
 $(BUILD_ELF): $(OBJECTS) $(B_GEN_LCF_FILE_TRICORE_TC)
-	@echo "    LD  $@"
+	@echo ld $@
 	@$(CC) $(LD_LIBS) -Wl,-T $(B_GEN_LCF_FILE_TRICORE_TC) -Wl,-Map=$(@:.elf=.map) -Wl,--extmap=a $(OBJECTS) -o $@
 
 $(BUILD_OUTPUT)%.o: %.c
-	@echo "    CC  $@"
+	@echo gcc $@
 	@$(CC) $(ALL_FLAGS) $(INCLUDES_DIR) -c $< -o $@ -MMD
 
 # Make-rule to build: hex
 $(BUILD_HEX): $(BUILD_ELF)
-	@echo '    OBJCOPY $(BUILD_HEX)'
+	@echo objcopy $(BUILD_HEX)
 	@$(OBJCOPY) $< -O ihex $@
 
 # Make-rule to build: srec
 $(BUILD_S19): $(BUILD_ELF)
-	@echo '    OBJCOPY $(BUILD_S19)'
+	@echo OBJCOPY $(BUILD_S19)
 	@$(OBJCOPY) $< -O srec $@
 
 $(BUILD_OUTPUT_NAME): 
